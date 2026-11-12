@@ -13,4 +13,6 @@ class AlignmentRun(Base):
     snapshot:Mapped[dict]=mapped_column(JSON,default=dict)
     result:Mapped[dict]=mapped_column(JSON,default=dict)
     error:Mapped[str]=mapped_column(String(600),default='')
+    source_run_id:Mapped[int|None]=mapped_column(ForeignKey('alignment_runs.id'),nullable=True,index=True)
+    recalculation_key:Mapped[str|None]=mapped_column(String(64),unique=True,nullable=True)
     created_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow)

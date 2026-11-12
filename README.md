@@ -24,6 +24,7 @@
 6. 09:25 查看PC1/2/3真实奇异值0.09730803/0.06469489/0.008383326，解释率67.9050%、30.0154%、0.5040%，累计98.4245%。同画布画算术均值及±2sd端点，端点未再单位化。
 7. 09:30 选择TL23，保留3模态重建残差0.00403665。写明实物角点复测、镜像方向与制造约束，不能直接把线性模态作为切割图。
 8. 10:00 沈汀用admin留批注并同意复验；叶禾用viewer下载 `inspection-note-<id>.csv`，含审批、配准摘要、30份轮廓的原始/对齐/重建坐标、两种均值与模态端点。新点需新建冻结研究，不回写历史结果。
+9. 10:30 复验时常需修正裁片角点后重算。在配准工作台从已完成研究发起复算：系统冻结发起当下的集合、模板版本与全部裁片，生成带 `source_run_id` 的复算任务；原研究、其冻结快照和已批准说明保持不变。来源、冻结输入、保留数和容差完全相同的重复请求返回同一任务，不新增行。复算完成后，结果页“复算对比”按裁片代码配对同名裁片，逐项列出对GPA均值距离与保留模态重建残差的前后值及变化；新增、移除裁片和标签顺序/模板变化单独说明。失败复算保留失败原因与来源链，不产生新配准值，也不替换来源研究的已发布结果。详情接口 `/runs/<id>/trace` 返回来源链供页面逐级追溯。
 
 数值来自固定seed输入的真实API/worker计算；镜像集合最大GPA距离约1.03168，仍保留差异。全同形校验有浮点残差约2.08e−15且没有假模态。
 
@@ -106,4 +107,4 @@ npm ci
 npm run dev -- --port 18234
 ```
 
-本地worker需可写/artifacts，推荐Compose卷。metadata.create_all只建缺表，初始DDL供审阅，没有生产版本迁移工具。Google Fonts DM Sans/Noto Sans SC/Noto Serif SC，离线回退serif。来源文件名为溯源元数据；没有任意CSV自动导入或自动同源点识别，新增模板可用API，UI核对/修改已有基准。测试/截图/已知差异在独立test-artifacts/gb-0030。收尾docker compose down -v --remove-orphans删除本题数据/结果卷。MIT License。
+本地worker需可写/artifacts，推荐Compose卷。metadata.create_all只建缺表，初始DDL与`migrations/002_run_recalculation.sql`供审阅；已有库升级复算栏位时手工执行002（新增 `source_run_id`、唯一 `recalculation_key`），没有生产版本迁移工具。Google Fonts DM Sans/Noto Sans SC/Noto Serif SC，离线回退serif。来源文件名为溯源元数据；没有任意CSV自动导入或自动同源点识别，新增模板可用API，UI核对/修改已有基准。测试/截图/已知差异在独立test-artifacts/gb-0030。收尾docker compose down -v --remove-orphans删除本题数据/结果卷。MIT License。

@@ -3,6 +3,12 @@ import hashlib,json
 import numpy as np
 from src.services.gpa import align_shapes
 
+def snapshot_fingerprint(snapshot,retained,tolerance):
+    """Canonical SHA256 of the frozen collection/template/specimens snapshot."""
+    normalized={**snapshot,'specimens':sorted(snapshot['specimens'],key=lambda s:s['code'])}
+    canonical={'algorithm':'so2-unit-gpa-arithmetic-pca-v1','snapshot':normalized,'retained':retained,'tolerance':tolerance}
+    return hashlib.sha256(json.dumps(canonical,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+
 def shape_pca(aligned,retained=3):
     if isinstance(retained,bool) or not isinstance(retained,int) or not 1<=retained<=5:raise ValueError('保留模态须为1–5')
     x=np.asarray(aligned,dtype=float);flat=x.reshape(len(x),-1);mean=flat.mean(axis=0);centered=flat-mean;u,s,vt=np.linalg.svd(centered,full_matrices=False)
@@ -23,5 +29,5 @@ def analyze_alignment(snapshot,retained,tolerance):
     if np.asarray(template['points']).shape!=(8,2) or any(np.asarray(s['points']).shape!=(8,2) for s in specimens):raise ValueError('每份裁片必须按同源顺序提供8×2点')
     gpa=align_shapes([s['points'] for s in specimens],template['points'],tolerance);pca=shape_pca(gpa['aligned'],retained);rows=[]
     for i,s in enumerate(specimens):rows.append({**s,**gpa['normalization'][i],'preshape':gpa['preshapes'][i].tolist(),'rotation':gpa['rotations'][i].tolist(),'rotation_determinant':gpa['determinants'][i],'aligned':gpa['aligned'][i].tolist(),'gpa_distance':float(np.linalg.norm(gpa['aligned'][i]-gpa['gpa_mean'])),'scores':pca['scores'][i],'reconstruction':pca['reconstruction'][i],'residual':pca['residual'][i]})
-    normalized_snapshot={**snapshot,'specimens':specimens};canonical={'algorithm':'so2-unit-gpa-arithmetic-pca-v1','snapshot':normalized_snapshot,'retained':retained,'tolerance':tolerance};fingerprint=hashlib.sha256(json.dumps(canonical,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    normalized_snapshot={**snapshot,'specimens':specimens};fingerprint=snapshot_fingerprint(snapshot,retained,tolerance)
     return {'specimens':rows,'labels':template['labels'],'gpa_mean':gpa['gpa_mean'].tolist(),'gpa_mean_norm':float(np.linalg.norm(gpa['gpa_mean'])),'reference_normalized':gpa['reference_normalized'].tolist(),'history':gpa['history'],'iterations':gpa['iterations'],'converged':gpa['converged'],'effective_tolerance':gpa['effective_tolerance'],'termination':gpa['termination'],'determinant_min':min(gpa['determinants']),'pca':pca,'mean_difference':float(np.linalg.norm(gpa['gpa_mean']-np.asarray(pca['arithmetic_mean']))),'fingerprint':fingerprint,'snapshot':normalized_snapshot,'scope':'SO(2) rotations only; fixed homologous labels; extrinsic linear modes are not manufacturing instructions'}
